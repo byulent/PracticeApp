@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">PracticeApp</string>
+    <string-array name="time_ranges">
+        <item name="day">Day</item>
+        <item name="week">Week</item>
+        <item name="month">Month</item>
+    </string-array>
 </resources>
