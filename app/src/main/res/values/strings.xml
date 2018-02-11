@@ -1,5 +1,22 @@
 <resources>
     <string name="app_name">PracticeApp</string>
+    <string name="activity_summary">Activity</string>
+    <string name="heart_rate_summary">Heart rate</string>
+    <string name="step_count_delta">Step count</string>
+    <string name="calories_expended">Expended calories</string>
+    <string name="distance_delta">Distance</string>
+    <string name="weight_summary">Weight</string>
+    <string name="calories_bmr_summary">Basal metabolic rate</string>
+    <string name="location_bounding_box">Location bounding box</string>
+    <string name="max">Maximum</string>
+    <string name="min">Minimum</string>
+    <string name="average">Average</string>
+    <string name="steps">Steps</string>
+    <string name="kcal">kcal</string>
+    <string name="s">s</string>
+    <string name="kg">kg</string>
+    <string name="m">m</string>
+    <string name="degree">°</string>
     <string-array name="time_ranges">
         <item name="day">Day</item>
         <item name="week">Week</item>

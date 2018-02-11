@@ -2,22 +2,17 @@ package ru.byulent.practiceapp;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ListAdapter;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.SimpleAdapter;
 import android.widget.Spinner;
-import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.fitness.Fitness;
@@ -27,6 +22,7 @@ import com.google.android.gms.fitness.data.DataPoint;
 import com.google.android.gms.fitness.data.DataSet;
 import com.google.android.gms.fitness.data.DataType;
 import com.google.android.gms.fitness.data.Field;
+import com.google.android.gms.fitness.data.HealthDataTypes;
 import com.google.android.gms.fitness.request.DataReadRequest;
 import com.google.android.gms.fitness.result.DataReadResponse;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -42,7 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static android.widget.AdapterView.*;
+import static android.widget.AdapterView.OnItemSelectedListener;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -68,12 +64,32 @@ public class MainActivity extends AppCompatActivity {
             DataType.TYPE_NUTRITION,
             DataType.TYPE_POWER_SAMPLE,
             DataType.TYPE_SPEED,
+            DataType.TYPE_LOCATION_SAMPLE,
+            //Restricted health data.
+            HealthDataTypes.TYPE_BASAL_BODY_TEMPERATURE,
+            HealthDataTypes.TYPE_BLOOD_GLUCOSE,
+            HealthDataTypes.TYPE_BLOOD_PRESSURE,
+            HealthDataTypes.TYPE_BODY_TEMPERATURE,
+            HealthDataTypes.TYPE_OXYGEN_SATURATION,
             //Non-aggregable types.
             DataType.TYPE_ACTIVITY_SAMPLES,
-            DataType.TYPE_HEIGHT
+            DataType.TYPE_HEIGHT,
+            DataType.TYPE_STEP_COUNT_CADENCE,
+            DataType.TYPE_LOCATION_TRACK,
+            DataType.TYPE_CYCLING_PEDALING_CADENCE,
+            DataType.TYPE_CYCLING_PEDALING_CUMULATIVE,
+            DataType.TYPE_CYCLING_WHEEL_REVOLUTION,
+            DataType.TYPE_CYCLING_WHEEL_RPM,
+            DataType.TYPE_WORKOUT_EXERCISE,
+            HealthDataTypes.TYPE_CERVICAL_MUCUS,
+            HealthDataTypes.TYPE_CERVICAL_POSITION,
+            HealthDataTypes.TYPE_OVULATION_TEST,
+            HealthDataTypes.TYPE_MENSTRUATION,
+            HealthDataTypes.TYPE_VAGINAL_SPOTTING
     };
 //Aggregates for data types.
     DataType [] aggregates = {
+            //Open fitness data.
             DataType.AGGREGATE_STEP_COUNT_DELTA,
             DataType.AGGREGATE_WEIGHT_SUMMARY,
             DataType.AGGREGATE_ACTIVITY_SUMMARY,
@@ -86,7 +102,14 @@ public class MainActivity extends AppCompatActivity {
         DataType.AGGREGATE_HYDRATION,
         DataType.AGGREGATE_NUTRITION_SUMMARY,
         DataType.AGGREGATE_POWER_SUMMARY,
-        DataType.AGGREGATE_SPEED_SUMMARY
+        DataType.AGGREGATE_SPEED_SUMMARY,
+        DataType.AGGREGATE_LOCATION_BOUNDING_BOX,
+        //Restricted health data.
+        HealthDataTypes.AGGREGATE_BASAL_BODY_TEMPERATURE_SUMMARY,
+        HealthDataTypes.AGGREGATE_BLOOD_GLUCOSE_SUMMARY,
+        HealthDataTypes.AGGREGATE_BLOOD_PRESSURE_SUMMARY,
+        HealthDataTypes.AGGREGATE_BODY_TEMPERATURE_SUMMARY,
+        HealthDataTypes.AGGREGATE_OXYGEN_SATURATION_SUMMARY
     };
 
     @Override
@@ -94,6 +117,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         datapoints = new ArrayList<>();
+        Names.setNames();
         listAdapter = new SimpleAdapter(this, datapoints, android.R.layout.simple_list_item_2, new String[]{"field", "value"}, new int[]{android.R.id.text1, android.R.id.text2}) {
         };
         ListView list = findViewById(R.id.list);
@@ -145,6 +169,7 @@ public class MainActivity extends AppCompatActivity {
 
         int aggs = aggregates.length;
         DataReadRequest.Builder builder = new DataReadRequest.Builder();
+//        DataReadRequest.Builder builder1 = new DataReadRequest.Builder();
         //Aggregating data.
         for (int i = 0; i < aggs; i++){
 //            if (i==8) builder.aggregate(DataType.TYPE_HEIGHT, DataType.AGGREGATE_HEIGHT_SUMMARY);
@@ -194,20 +219,38 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
+        if (dataReadResponse.getDataSets().size() > 0 ) {
+            Log.d(LOG_TAG, "DataSets aren't null");
+        }
     }
 
     private void dumpDataSet(DataSet dataSet) {
         for (DataPoint dataPoint: dataSet.getDataPoints()){
             for (Field field : dataPoint.getDataType().getFields()){
                 HashMap<String, String> m = new HashMap<>();
-                m.put("field", dataPoint.getDataType().getName() + ": " + field.getName());
-                m.put("value", dataPoint.getValue(field).toString());
+                m.put("field", Names.getDataTypeString(dataPoint.getDataType().getName(), this) + ": " + Names.getFieldName(field, this));
+                m.put("value", parseValue(dataPoint, field)+ " " + parseMeasure(dataPoint, field));
                 datapoints.add(m);
             }
         }
         listAdapter.notifyDataSetChanged();
     }
 
+    private String parseValue(DataPoint dataPoint, Field field) {
+        if (field.equals(Field.FIELD_ACTIVITY)){
+            return dataPoint.getValue(field).asActivity();
+        }
+        if (field.equals(Field.FIELD_DURATION)) {
+            return String.valueOf(dataPoint.getValue(field).asInt()/1000.0);
+        }
+        return dataPoint.getValue(field).toString();
+    }
+
+    private String parseMeasure (DataPoint dataPoint, Field field) {
+        if (Names.getMeasure(dataPoint.getDataType(), this) != null) return Names.getMeasure(dataPoint.getDataType(), this);
+        else if (Names.getMeasure(field, this) != null) return Names.getMeasure(field, this);
+        else return "";
+    }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if(resultCode == Activity.RESULT_OK){
