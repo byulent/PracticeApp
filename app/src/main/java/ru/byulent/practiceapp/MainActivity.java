@@ -225,10 +225,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void dumpDataSet(DataSet dataSet) {
+        int num = 0;
+        if (dataSet.getDataPoints().size() > 1) num = 1;
         for (DataPoint dataPoint: dataSet.getDataPoints()){
+            String numStr = "";
+            if (num > 0) numStr = " " + String.valueOf(num);
             for (Field field : dataPoint.getDataType().getFields()){
                 HashMap<String, String> m = new HashMap<>();
-                m.put("field", Names.getDataTypeString(dataPoint.getDataType().getName(), this) + ": " + Names.getFieldName(field, this));
+                m.put("field", Names.getDataTypeString(dataPoint.getDataType().getName(), this) + numStr + ": " + Names.getFieldName(field, this));
                 m.put("value", parseValue(dataPoint, field)+ " " + parseMeasure(dataPoint, field));
                 datapoints.add(m);
             }
