@@ -236,6 +236,7 @@ public class MainActivity extends AppCompatActivity {
                 m.put("value", parseValue(dataPoint, field)+ " " + parseMeasure(dataPoint, field));
                 datapoints.add(m);
             }
+            num++;
         }
         listAdapter.notifyDataSetChanged();
     }
